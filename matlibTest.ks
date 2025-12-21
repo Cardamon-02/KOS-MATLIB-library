@@ -1,10 +1,12 @@
-runpath("MATLIB.ks").
+runpath("MATLIB_rev0.3.ks").
 set m to 3.
 set n to 5.
 set Mat to ones(m,n).
 set Mat2 to Mat.
-local Row123 is list(1,3,1,2,3).
-local Row456 is list(1,3,4,5,6).
+local Row123 is ones(1,3).
+set Row123:data to list(1,2,3).
+local Row456 is ones(1,3).
+set Row456:data to list(4,5,6).
 
 clearscreen.
 print "MATLIBPrint". // show functionality of printing matrices
@@ -73,11 +75,51 @@ local dt is 0.05.
 local tf is 1.
 local S is RK4(rk4test2@,t0,dt,tf,IC).
 MATLIBPrint(S).
-
 toMatrix(S,"RK4Test2.csv").
+print "Type n to continue.".
+wait until Terminal:Input:getchar() = "n".
+clearscreen.
 
+local qbar is list(4,1,-1,-2,3,4). // initialize qbar
+local qbar2 is list(4,1,-4,-3,2,1). // initialize qbar 2
+set qbar to MATLIBDot(qbar,1/sqrt(30)).
+set qbar2 to MATLIBDot(qbar2,1/sqrt(30)).
+local ebarphi is q2euler(qbar).
+print "Quaternion to Euler Parameters.".
+print " ".
+print "Input Quaternion.".
+MATLIBPrint(qbar).
+print " ".
+print "Euler Parameters.".
+MATLIBPrint(ebarphi["ebar"]).
+print round(ebarphi["phi"],3).
+print " ".
+print "Quaternion to Yaw Pitch and Roll angles.".
+print " ".
+local YPR is q2YPR(qbar).
+print "Yaw   = " + round(YPR["Yaw"],4).
+print "Pitch = " + round(YPR["Pitch"],4).
+print "Roll  = " + round(YPR["Roll"],4).
+print " ".
+print "Quaternion to DCM.".
+print " ".
+local DCM is q2DCM(qbar).
+MATLIBPrint(DCM).
+print " ".
+print "Quaternion Multiplication.".
+print " ".
+local qbar3 is qMult(qbar,qbar2).
+MATLIBPrint(qbar3).
+print "Type n to continue.".
+wait until Terminal:Input:getchar() = "n".
+clearscreen.
 
-
+print "Direction vectors to quaternion.".
+print " ".
+local r1 is list(3,1,1,-2,3).
+local r2 is list(3,1,4,5,6).
+local qbar is r1r2Toq(r1,r2).
+MATLIBPrint(qbar).
 
 
 function rk4test{
