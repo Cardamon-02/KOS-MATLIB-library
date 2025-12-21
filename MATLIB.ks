@@ -12,7 +12,7 @@ local function init {
 	a:add(val).
 	}
 
-	local setval is {
+	local function setval {
 		parameter row,col,val.
 		if (row <= m) AND (col <= n){
 			// using COLUMN MAJOR order, one based indexing.
@@ -25,9 +25,10 @@ local function init {
 		} else {
 			print "Both the row ("+row+") and column ("+col+") indexes are greater than the matrix size, "+m+" X "+n +".".
 		}
+		return.
 	}
 
-	local getval is {
+	local function getval {
 		parameter row,col.
 		if (row <= m) AND (col <= n){
 			// using COLUMN MAJOR order, one based indexing.
@@ -40,6 +41,7 @@ local function init {
 		} else {
 			print "Both the row ("+row+") and column ("+col+") indexes are greater than the matrix size, "+m+" X "+n +".".
 		}
+		return.
 	}
 
 	return lexicon("rows",m,"cols",n,"data",a,"set",setval,"get",getval,"isQuat",false).
@@ -117,7 +119,7 @@ function horzcat {
 	parameter A, B. // take two matrices as input
 	// horzcat copies A, places B's data on the right hand side of A prime (C), and returns C.
 	// check to make sure A and B are matrices with the same number of rows.
-	if <> A:istype("Lexicon") OR <> B:istype("Lexicon") {
+	if NOT A:istype("Lexicon") OR NOT B:istype("Lexicon") {
 		print "Error in horzcat: One or more inputs was not a matrix.".
 		return -1.
 	} else if A:rows <> B:rows {
@@ -125,7 +127,7 @@ function horzcat {
 		return -1.
 	}
 	local C is A:copy.
-	C:cols is A:cols + B:cols.
+	set C:cols to A:cols + B:cols.
 	// we got here so the inputs will work. concatenate B on the right of A
 	from {local i is 1.} until i > A:rows step {set i to i + 1.} do {
 		from {local j is 1.} until j > B:cols step {set j to j + 1.} do {
@@ -139,7 +141,7 @@ function vertcat {
 	parameter A, B. // take two matrices as input
 	// vertcat copies A, places B's data below A prime (C), and returns C.
 	// check to make sure A and B are matrices with the same number of rows.
-	if <> A:istype("Lexicon") OR <> B:istype("Lexicon") {
+	if NOT A:istype("Lexicon") OR NOT B:istype("Lexicon") {
 		print "Error in vertcat: One or more inputs was not a matrix.".
 		return -1.
 	} else if A:cols <> B:cols {
@@ -147,14 +149,14 @@ function vertcat {
 		return -1.
 	}
 	local C is A:copy.
-	C:rows is A:rows + B:rows.
+	set C:rows to A:rows + B:rows.
 	for entry in B:data { // add all the data from B onto the end of C.
 		C:data:add(entry).
 	}
 	return C.
 }
 
-function getRow is {
+function getRow {
 	parameter a,Row.
 	// get the whole row from matrix a. basic error handling implemented.
 	if NOT a:istype("Lexicon") {
@@ -207,7 +209,7 @@ function setRow {
 	return.
 }
 
-function getCol is {
+function getCol {
 	parameter a,Col.
 	// get the whole column from matrix a. basic error handling implemented.
 	if NOT a:istype("Lexicon") {
@@ -324,13 +326,13 @@ function MATLIBDotProd {
 		print "Error in MATLIBDotProd: One or more inputs was two dimensional.".
 		return -1.
 	}
-	local c is MATLIBDot(a,b)
+	local c is MATLIBDot(a,b).
 	if c:rows * c:cols = 1 {
 		return c:data[0]. // if the result from MATLIBDot was a scalar return the scalar value
 	} else {
 		local val is c:data[0].
-		from {local i is 1.} until i = (c:rows * c:cols - 1) step {set it to i + 1.} do{
-			val is val + c:data[i].
+		from {local i is 1.} until i = (c:rows * c:cols - 1) step {set i to i + 1.} do{
+			set val to val + c:data[i].
 		}
 		return val.
 	}
@@ -341,7 +343,7 @@ function MATLIBMult {
 	// Both inputs must be of appropriate size for matrix multiplication.
 	// Matrix multiplication will always be [A] * [B].
 	if a:istype("Lexicon") AND b:istype("Lexicon") {
-		if a:cols is b:rows { // Check for dimension match.
+		if a:cols = b:rows { // Check for dimension match.
 			local m is a:rows. // get the # of rows
 			local n is b:cols. // get the # of columns
 			local c is zeros(m,n). // initialize matrix
@@ -376,9 +378,9 @@ function MATLIBCross {
 	local c is zeros(1,3).
 	// check that both inputs are 1x3 or 3x1 matrices
 	if a:istype("Lexicon") AND b:istype("Lexicon") AND (a:cols * a:rows) = 3 AND (b:rows * b:cols) = 3 {
-		c:setval(1,1) to a:data[1] * b:data[2] - a:data[2] * b:data[1].
-		c:setval(1,2) to a:data[2] * b:data[0] - a:data[0] * b:data[2].
-		c:setval(1,3) to a:data[0] * b:data[1] - a:data[1] * b:data[0].
+		set c:setval(1,1) to a:data[1] * b:data[2] - a:data[2] * b:data[1].
+		set c:setval(1,2) to a:data[2] * b:data[0] - a:data[0] * b:data[2].
+		set c:setval(1,3) to a:data[0] * b:data[1] - a:data[1] * b:data[0].
 		return c.
 	} else {
 		print "Error in MATLIBCross: Inputs must be two row or column matrices of length 3.".
@@ -390,7 +392,7 @@ function trace {
 	parameter a.
 	// sums the diagonal of a matrix and returns the scalar it produces.
 	// Error handling.
-	if <> a:istype("Lexicon") {
+	if NOT a:istype("Lexicon") {
 		print "Error in trace: Input was not a matrix.".
 		return 0.
 	} else if a:rows <> a:cols {
@@ -400,7 +402,7 @@ function trace {
 		print "Error in trace: Input matrix has nonsense dimensions.".
 		return 0.
 	}
-	local n = a:rows.
+	local n is a:rows.
 	local trace to 0.
 	from { local i is 1. } until i > n step {set i to i + 1. } do {
 		set trace to trace + a:getVal(i,i).
@@ -412,7 +414,7 @@ function norm {
 	parameter a.
 	// gets the magintude of a vector and returns it as a scalar.
 	// Error handling.
-	if <> a:istype("Lexicon") {
+	if NOT a:istype("Lexicon") {
 		print "Error in norm: Input was not a vector.".
 		return 0.
 	} else if (a:rows <> 1) AND (a:cols <> 1) {
@@ -427,7 +429,7 @@ function norm {
 	} else {
 		set L to a:rows.
 	}
-	from local {local i is 1.} until i > L step {set i to i + 1.} do{
+	from {local i is 1.} until i > L step {set i to i + 1.} do{
 		set norm to norm + a:data[i - 1]^2.
 	}
 	return sqrt(norm).
@@ -437,7 +439,7 @@ function normalize {
 	parameter a.
 	// gets the magintude of a vector and returns it as a scalar.
 	// Error handling.
-	if <> a:istype("Lexicon") {
+	if NOT a:istype("Lexicon") {
 		print "Error in normalize: Input was not a vector.".
 		return 0.
 	} else if (a:rows <> 1) AND (a:cols <> 1) {
@@ -452,10 +454,10 @@ function normalize {
 	} else {
 		set L to a:rows.
 	}
-	from local {local i is 1.} until i > L step {set i to i + 1.} do{
+	from {local i is 1.} until i > L step {set i to i + 1.} do{
 		set norm to norm + a:data[i - 1]^2.
 	}
-	from local {local i is 1.} until i > L step {set i to i + 1.} do{
+	from {local i is 1.} until i > L step {set i to i + 1.} do{
 		set a:data[i-1] to a:data[i - 1]/norm.
 	}
 	return.
@@ -502,10 +504,10 @@ function q2Euler {
 	// converts from quaternion to euler parameters
 
 	// Error Handling
-	if qbar:typename <> "Lexicon" {
+	if NOT qbar:istype("Lexicon") {
 		print "Error in q2YPR: Input was not a lexicon.".
 		return -1.
-	} else if <> qbar:isQuat {
+	} else if NOT qbar:isQuat {
 		if (qbar:cols <> 1) AND (qbar:rows <> 4) {
 			print "Error in q2YPR: Input was not a 1x4 vector.".
 			return -1.
@@ -516,12 +518,12 @@ function q2Euler {
 		} else {
 			// we got here, it must be a quaternion, BUT the flag was not there.
 			// Re-identify as quaternion.
-			qbar:isQuat is true.
+			set qbar:isQuat to true.
 		}
 	}
 	local acosq4 is arccos(qbar:data[3]). // grab q4 and get the acos of it
 	local qhat is zeros(3,1).
-	local qhat:data is list(qbar:data[0],qbar:data[1],qbar:data[2]). // grab qhat
+	set qhat:data to list(qbar:data[0],qbar:data[1],qbar:data[2]). // grab qhat
 	local ebar is MATLIBDot(qhat,1/sin(acosq4)).  // generate ebar
 	local out is lexicon("ebar",ebar,"phi",constant:DegToRad*2*acosq4). // generate a lexicon to return ebar and phi.
 	return out.
@@ -532,10 +534,10 @@ function q2YPR {
 	// Converts from quaternion to Yaw, Pitch, and Roll angles.
 
 	// Error Handling
-	if qbar:typename <> "Lexicon" {
+	if NOT qbar:istype("Lexicon") {
 		print "Error in q2YPR: Input was not a lexicon.".
 		return -1.
-	} else if <> qbar:isQuat {
+	} else if NOT qbar:isQuat {
 		if (qbar:cols <> 1) AND (qbar:rows <> 4) {
 			print "Error in q2YPR: Input was not a 1x4 vector.".
 			return -1.
@@ -546,7 +548,7 @@ function q2YPR {
 		} else {
 			// we got here, it must be a quaternion, BUT the flag was not there.
 			// Re-identify as quaternion.
-			qbar:isQuat is true.
+			set qbar:isQuat to true.
 		}
 	}
 	// Isolate q1 - q4, since this will be scalar operations and return 3 angles.
@@ -575,10 +577,10 @@ function q2DCM {
 	// Converts from quaternion to a Direction Cosine Matrix, DCM.
 
 	// Error Handling
-	if qbar:typename <> "Lexicon" {
+	if NOT qbar:istype("Lexicon") {
 		print "Error in q2DCM: Input was not a lexicon.".
 		return -1.
-	} else if <> qbar:isQuat {
+	} else if NOT qbar:isQuat {
 		if (qbar:cols <> 1) AND (qbar:rows <> 4) {
 			print "Error in q2DCM: Input was not a 1x4 vector.".
 			return -1.
@@ -589,7 +591,7 @@ function q2DCM {
 		} else {
 			// we got here, it must be a quaternion, BUT the flag was not there.
 			// Re-identify as quaternion.
-			qbar:isQuat is true.
+			set qbar:isQuat to true.
 		}
 	}	
 	// Isolate q1 -q4.
@@ -599,9 +601,9 @@ function q2DCM {
 	local q4 is qbar:data[3].
 	// Prep the DCM.
 	local qhat is zeros(3,1).
-	qhat:data is list(q1,q2,q3). // set qhat.
+	set qhat:data to list(q1,q2,q3). // set qhat.
 	local Mat1 is zeros(3,3).
-	Mat1:data is list(0,q3,-q2,-q3,0,q1,q2,-q1,0).
+	set Mat1:data to list(0,q3,-q2,-q3,0,q1,q2,-q1,0).
 	// Transpose qhat
 	local qhatTran is qhat:copy.
 	set qhatTran:rows to 1.
@@ -625,10 +627,10 @@ function qMult {
 	// rotation 1 followed by rotation 2.
 
 	// Error Handling
-	if qbar1:typename <> "Lexicon" OR qbar2:typename <> "Lexicon" { // check to see if they both may be quaternions
+	if NOT qbar1:istype("Lexicon") OR NOT qbar2:istype("Lexicon") { // check to see if they both may be quaternions
 		print "Error in q2YPR: One or more inputs was not a lexicon.".
 		return -1.
-	} else if <> qbar1:isQuat OR <> qbar2:isQuat { // do both have the flag?
+	} else if NOT qbar1:isQuat OR NOT qbar2:isQuat { // do both have the flag?
 		if ((qbar1:cols <> 1) AND (qbar1:rows <> 4)) OR ((qbar2:cols <> 1) AND (qbar2:rows <> 4)) {
 			// both did not have the flag, are they the right shape?
 			print "Error in q2YPR: One or more inputs was not a 1x4 vector.".
@@ -641,8 +643,8 @@ function qMult {
 		} else {
 			// we got here, both must be quaternions, BUT the flag was not there.
 			// Re-identify as quaternion.
-			qbar1:isQuat is true.
-			qbar2:isQuat is true.
+			set qbar1:isQuat to true.
+			set qbar2:isQuat to true.
 		}
 	}	
 	// Isolate q1 -q4.
@@ -651,10 +653,10 @@ function qMult {
 	local q3 is qbar2:data[2].
 	local q4 is qbar2:data[3].
 	local qbarPrime is zeros(4,4).
-	qbarPrime:data is list(0,q3,-q2,q1,-q3,0,q1,q2,q2,-q1,0,q3,-q1,-q2,-q3,0).
+	set qbarPrime:data to list(0,q3,-q2,q1,-q3,0,q1,q2,q2,-q1,0,q3,-q1,-q2,-q3,0).
 	set qbarPrime to MATLIBSum(qbarPrime,MATLIBDot(eye(4),q4)).
-	answer is MATLIBMult(qbarPrime,qbar1).
-	answer:isQuat is True.
+	local answer is MATLIBMult(qbarPrime,qbar1).
+	set answer:isQuat to True.
 	return answer.
 }
 
@@ -663,7 +665,7 @@ function r1r2Toq {
 	// Converts two vectors into a quaternion for the angle between them.
 
 	// Error Handling
-	if (r1:typename <> "Lexicon") OR (r2:typename<> "Lexicon") {
+	if NOT r1:istype("Lexicon") OR NOT r2:istype("Lexicon") {
 		print "Error in r1r2Toq: One or more inputs was not a lexicon.".
 		return -1.
 	} else if ((r1:cols <> 1) AND (r1:rows <> 3)) OR ((r2:cols <> 1) AND (r2:rows <> 3)) {
@@ -676,6 +678,6 @@ function r1r2Toq {
 	qbar:data:add(q4).
 	set qbar:rows to 4.
 	set qbar:cols to 1.
-	qbar:isQuat is True.
+	set qbar:isQuat to True.
 	return MATLIBDot(qbar,1/norm(qbar)).
 }
